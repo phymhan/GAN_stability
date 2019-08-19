@@ -2,9 +2,12 @@ import torch
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import numpy as np
+import torch.utils.data as data
+import os
+from PIL import Image
 
 
-def get_dataset(name, data_dir, size=64, lsun_categories=None):
+def get_dataset(name, data_dir, sourcefile='', size=64, lsun_categories=None):
     transform = transforms.Compose([
         transforms.Resize(size),
         transforms.CenterCrop(size),
@@ -16,6 +19,9 @@ def get_dataset(name, data_dir, size=64, lsun_categories=None):
 
     if name == 'image':
         dataset = datasets.ImageFolder(data_dir, transform)
+        nlabels = len(dataset.classes)
+    elif name == 'imagelist':
+        dataset = ImageList(data_dir, sourcefile, transform)
         nlabels = len(dataset.classes)
     elif name == 'npy':
         # Only support normalization for now
@@ -56,3 +62,33 @@ def npy_loader(path):
         img.squeeze_(0)
 
     return img
+
+
+class ImageList(data.Dataset):
+    def __init__(self, root, sourcefile, transform=None, target_transform=None):
+        self.root = os.path.expanduser(root)
+        with open(sourcefile, 'r') as f:
+            images = []
+            labels = []
+            for line in f.readlines():
+                line = line.rstrip().split()
+                images.append(os.path.join(root, line[0]))
+                labels.append(int(line[1]))
+        self.images = images
+        self.labels = labels
+        self.classes = list(set(labels))
+        self.transform = transform
+        self.target_transform = target_transform
+
+    def __getitem__(self, index):
+        img = Image.open(self.images[index]).convert('RGB')
+        lbl = self.labels[index]
+
+        if self.transform is not None:
+            img = self.transform(img)
+        if self.target_transform is not None:
+            lbl = self.target_transform(lbl)
+        return img, lbl
+
+    def __len__(self):
+        return len(self.labels)

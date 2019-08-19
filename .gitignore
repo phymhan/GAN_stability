@@ -1,5 +1,6 @@
 output
 data
+sourcefiles
 *_lmdb
 __pycache__
 *.pyc
