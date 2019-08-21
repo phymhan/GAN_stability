@@ -85,8 +85,7 @@ class CheckpointIO(object):
         
         Args:
             state_dict (dict): State dict of model
-    '''
-
+        '''
         for k, v in self.module_dict.items():
             if k in state_dict:
                 v.load_state_dict(state_dict[k])
@@ -95,6 +94,7 @@ class CheckpointIO(object):
         scalars = {k: v for k, v in state_dict.items()
                    if k not in self.module_dict}
         return scalars
+
 
 def is_url(url):
     scheme = urllib.parse.urlparse(url).scheme

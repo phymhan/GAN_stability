@@ -83,8 +83,8 @@ def build_optimizers(generator, discriminator, config):
     lr_d = config['training']['lr_d']
     equalize_lr = config['training']['equalize_lr']
 
-    toogle_grad(generator, True)
-    toogle_grad(discriminator, True)
+    toggle_grad(generator, True)
+    toggle_grad(discriminator, True)
 
     if equalize_lr:
         g_gradient_scales = getattr(generator, 'gradient_scales', dict())

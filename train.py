@@ -110,8 +110,7 @@ logger = Logger(
 
 # Distributions
 ydist = get_ydist(nlabels, device=device)
-zdist = get_zdist(config['z_dist']['type'], config['z_dist']['dim'],
-                  device=device)
+zdist = get_zdist(config['z_dist']['type'], config['z_dist']['dim'], device=device)
 
 # Save for tests
 ntest = batch_size
@@ -128,8 +127,7 @@ else:
     generator_test = generator
 
 # Evaluator
-evaluator = Evaluator(generator_test, zdist, ydist,
-                      batch_size=batch_size, device=device)
+evaluator = Evaluator(generator_test, zdist, ydist, batch_size=batch_size, device=device)
 
 # Train
 tstart = t0 = time.time()
@@ -149,7 +147,7 @@ if (config['training']['take_model_average']
         and config['training']['model_average_reinit']):
     update_average(generator_test, generator, 0.)
 
-# Learning rate anneling
+# Learning rate annealing
 g_scheduler = build_lr_scheduler(g_optimizer, config, last_epoch=it)
 d_scheduler = build_lr_scheduler(d_optimizer, config, last_epoch=it)
 
@@ -193,8 +191,7 @@ while True:
             logger.add('losses', 'generator', gloss, it=it)
 
             if config['training']['take_model_average']:
-                update_average(generator_test, generator,
-                               beta=config['training']['model_average_beta'])
+                update_average(generator_test, generator, beta=config['training']['model_average_beta'])
 
         # Print stats
         g_loss_last = logger.get_last('losses', 'generator')
@@ -231,5 +228,5 @@ while True:
             logger.save_stats('stats.p')
             t0 = time.time()
 
-            if (restart_every > 0 and t0 - tstart > restart_every):
+            if restart_every > 0 and t0 - tstart > restart_every:
                 exit(3)
