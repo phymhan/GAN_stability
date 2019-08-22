@@ -21,8 +21,8 @@ def get_dataset(name, data_dir, sourcefile='', size=64, lsun_categories=None):
         dataset = datasets.ImageFolder(data_dir, transform)
         nlabels = len(dataset.classes)
     elif name == 'imagelist':
-        dataset = ImageList(data_dir, sourcefile, transform)
-        nlabels = len(dataset.classes)
+        dataset = ImageList(data_dir, sourcefile, transform, lambda y: y / 100.0)
+        nlabels = 1
     elif name == 'npy':
         # Only support normalization for now
         dataset = datasets.DatasetFolder(data_dir, npy_loader, ['npy'])

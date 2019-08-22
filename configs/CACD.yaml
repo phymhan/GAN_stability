@@ -2,21 +2,21 @@ data:
   type: imagelist
   train_dir: data/CACD
   test_dir: data/CACD
-  train_src: sourcefiles/CACD_5_train.txt
-  test_src: sourcefiles/CACD_5_val.txt
+  train_src: sourcefiles/CACD_train.txt
+  test_src: sourcefiles/CACD_val.txt
   img_size: 512
 generator:
   name: resnet
   kwargs:
     nfilter: 16
     nfilter_max: 512
-    embed_size: 1
+    embed_size: 256
 discriminator:
   name: resnet
   kwargs:
     nfilter: 16
     nfilter_max: 512
-    embed_size: 1
+    embed_size: 256
 z_dist:
   type: gauss
   dim: 256

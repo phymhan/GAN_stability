@@ -13,6 +13,7 @@ class Generator(nn.Module):
         s0 = self.s0 = 4
         nf = self.nf = nfilter
         nf_max = self.nf_max = nfilter_max
+        self.embed_size = embed_size
 
         self.z_dim = z_dim
 
@@ -20,8 +21,8 @@ class Generator(nn.Module):
         nlayers = int(np.log2(size / s0))
         self.nf0 = min(nf_max, nf * 2**nlayers)
 
-        self.embedding = nn.Embedding(nlabels, embed_size)
-        self.fc = nn.Linear(z_dim + embed_size, self.nf0*s0*s0)
+        # self.embedding = nn.Embedding(nlabels, embed_size)
+        self.embedding = nn.Conv2d(1, embed_size, 1, 1, 0)
 
         blocks = []
         for i in range(nlayers):
@@ -39,23 +40,14 @@ class Generator(nn.Module):
         self.resnet = nn.Sequential(*blocks)
         self.conv_img = nn.Conv2d(nf, 3, 3, padding=1)
 
-    def forward(self, z, y):
+    def forward(self, x, y):
+        z = self.embeddingX(x)
         assert(z.size(0) == y.size(0))
         batch_size = z.size(0)
 
-        if y.dtype is torch.int64:
-            yembed = self.embedding(y)
-        else:
-            yembed = y
-
-        yembed = yembed / torch.norm(yembed, p=2, dim=1, keepdim=True)
-
-        yz = torch.cat([z, yembed], dim=1)
-        out = self.fc(yz)
-        out = out.view(batch_size, self.nf0, self.s0, self.s0)
-
+        yembed = self.embedding(y.expand(batch_size, self.embed_size, self.s0, self.s0))
+        out = torch.cat([z, yembed], dim=1)
         out = self.resnet(out)
-
         out = self.conv_img(actvn(out))
         out = torch.tanh(out)
 
@@ -140,6 +132,43 @@ class ResnetBlock(nn.Module):
         else:
             x_s = x
         return x_s
+
+
+class EmbeddingX(nn.Module):
+    def __init__(self, z_dim, nlabels, size, embed_size=256, nfilter=64, nfilter_max=1024):
+        super().__init__()
+        self.embed_size = embed_size
+        s0 = self.s0 = 4
+        nf = self.nf = nfilter
+        nf_max = self.nf_max = nfilter_max
+
+        # Submodules
+        nlayers = int(np.log2(size / s0))
+        self.nf0 = min(nf_max, nf * 2**nlayers)
+
+        blocks = [
+            ResnetBlock(nf, nf)
+        ]
+
+        for i in range(nlayers):
+            nf0 = min(nf * 2**i, nf_max)
+            nf1 = min(nf * 2**(i+1), nf_max)
+            blocks += [
+                nn.AvgPool2d(3, stride=2, padding=1),
+                ResnetBlock(nf0, nf1),
+            ]
+
+        self.conv_img = nn.Conv2d(3, 1*nf, 3, padding=1)
+        self.resnet = nn.Sequential(*blocks)
+        # self.fc = nn.Linear(self.nf0*s0*s0, nlabels)
+
+    def forward(self, x):
+        batch_size = x.size(0)
+        out = self.conv_img(x)
+        out = self.resnet(out)
+        # out = out.view(batch_size, self.nf0*self.s0*self.s0)
+        # out = self.fc(actvn(out))
+        return out
 
 
 def actvn(x):
